@@ -93,6 +93,10 @@
     .seg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
     .seg button{min-height:48px;border-radius:14px;border:1px solid rgba(80,56,38,.12);background:#fff8e7;color:var(--ink);font-weight:900}
     .seg button.active{background:var(--green);color:white;border-color:var(--green)}
+    .voice-picker{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:9px}
+    .voice-picker select{min-width:0;height:48px;border-radius:14px;border:1px solid rgba(80,56,38,.14);background:#fff8e7;color:var(--ink);padding:0 11px;font-weight:800}
+    .voice-preview{height:48px;border-radius:14px;border:0;background:var(--blue);color:white;padding:0 13px;font-weight:950}
+    .voice-note{font-size:.72rem!important;margin-top:8px!important;color:var(--muted)!important}
     .switch-row{display:flex;align-items:center;justify-content:space-between;gap:14px}.switch-row b{font-size:.93rem}.switch-row small{display:block;color:var(--muted);font-size:.76rem;margin-top:3px}
     .switch{position:relative;width:52px;height:30px;flex:0 0 auto}.switch input{position:absolute;opacity:0}.slider{position:absolute;inset:0;border-radius:99px;background:#d8cbb4;transition:.2s}.slider:after{content:"";position:absolute;width:24px;height:24px;left:3px;top:3px;border-radius:50%;background:white;box-shadow:0 2px 8px rgba(0,0,0,.18);transition:.2s}.switch input:checked+.slider{background:var(--green)}.switch input:checked+.slider:after{transform:translateX(22px)}
     .history{display:flex;gap:7px;overflow-x:auto;padding:2px 0 5px;scrollbar-width:none}.history::-webkit-scrollbar{display:none}.history-chip{flex:0 0 auto;min-width:76px;max-width:104px;border-radius:14px;background:#fff8e7;border:1px solid rgba(80,56,38,.1);padding:8px;text-align:center}.history-chip .e{font-size:1.45rem}.history-chip .t{font-size:.67rem;font-weight:900;line-height:1.05;margin-top:4px}
@@ -162,7 +166,22 @@
     <p>La voz siempre está activa. Elige cómo quieres que cante las cartas.</p>
 
     <div class="setting">
-      <label>Estilo de voz</label>
+      <label>Tipo de voz</label>
+      <div class="seg" id="voiceTypes">
+        <button type="button" data-voice-type="male">👨 Hombre</button>
+        <button type="button" data-voice-type="female">👩 Mujer</button>
+        <button type="button" data-voice-type="mexican" class="active">🇲🇽 Mexicana</button>
+        <button type="button" data-voice-type="other">🔀 Otra</button>
+      </div>
+      <div class="voice-picker">
+        <select id="voiceSelect" aria-label="Voz del cantador"><option value="">Automática</option></select>
+        <button id="voicePreview" class="voice-preview" type="button">▶ Probar</button>
+      </div>
+      <p class="voice-note">Las voces disponibles dependen de las voces instaladas en este celular.</p>
+    </div>
+
+    <div class="setting">
+      <label>Estilo al cantar</label>
       <div class="seg" id="voiceStyles">
         <button type="button" data-style="classic" class="active">🎙️ Clásica</button>
         <button type="button" data-style="happy">🎉 Alegre</button>
@@ -203,10 +222,10 @@
     const progressText=$('#progressText'),remainingText=$('#remainingText'),fill=$('#fill');
     const shuffleBtn=$('#shuffleBtn'),playBtn=$('#playBtn'),playIcon=$('#playIcon'),playLabel=$('#playLabel'),nextBtn=$('#nextBtn');
     const pace=$('#pace'),paceValue=$('#paceValue'),settingsBtn=$('#settingsBtn'),sheet=$('#sheet'),backdrop=$('#backdrop');
-    const voiceStyles=$('#voiceStyles'),soundToggle=$('#soundToggle'),vibrationToggle=$('#vibrationToggle'),historyEl=$('#history');
+    const voiceTypes=$('#voiceTypes'),voiceSelect=$('#voiceSelect'),voicePreview=$('#voicePreview'),voiceStyles=$('#voiceStyles'),soundToggle=$('#soundToggle'),vibrationToggle=$('#vibrationToggle'),historyEl=$('#history');
     const installBtn=$('#installBtn'),iosHint=$('#iosHint'),toast=$('#toast'),confetti=$('#confetti'),offlinePill=$('#offlinePill');
 
-    const settings={voiceStyle:'classic',sound:true,vibration:true};
+    const settings={voiceStyle:'classic',voiceType:'mexican',voiceURI:'',sound:true,vibration:true};
     let deck=[],index=-1,running=false,timer=null,history=[],audioCtx=null,deferredPrompt=null,voiceList=[];
 
     const voiceProfiles={
@@ -222,15 +241,52 @@
     function tone(freq,duration=.07,type='triangle',gain=.045,delay=0){if(!settings.sound)return;const c=ensureAudio();if(!c)return;const o=c.createOscillator(),g=c.createGain(),t=c.currentTime+delay;o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(gain,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+duration+.03)}
     function sfx(type){if(type==='shuffle'){[0,.04,.08,.12,.16,.20].forEach((d,i)=>tone(180+i*30,.05,'triangle',.035,d))}else if(type==='card'){tone(420,.055,'triangle',.05,0);tone(640,.08,'sine',.03,.05)}else if(type==='start'){tone(330,.07,'triangle',.04,0);tone(440,.07,'triangle',.04,.07);tone(660,.1,'triangle',.04,.14)}else if(type==='end'){[523,659,784,1047].forEach((f,i)=>tone(f,.16,'triangle',.05,i*.08))}else if(type==='pause'){tone(320,.07,'sine',.035,0);tone(230,.09,'sine',.025,.07)}}
 
-    function loadVoices(){voiceList=('speechSynthesis' in window)?window.speechSynthesis.getVoices():[]}
+    const maleNames=/\b(Jorge|Juan|Diego|Carlos|Pablo|Enrique|Raúl|Raul|Andrés|Andres|Miguel|Álvaro|Alvaro|Antonio)\b/i;
+    const femaleNames=/\b(Paulina|Mónica|Monica|Luciana|Helena|Marisol|Conchita|Sofía|Sofia|Laura|Carmen|Isabela|Isabel)\b/i;
+    function spanishVoices(){return voiceList.filter(v=>/^es/i.test(v.lang))}
+    function populateVoiceSelect(){
+      const voices=spanishVoices();
+      const previous=settings.voiceURI;
+      voiceSelect.innerHTML='<option value="">Automática</option>';
+      voices.forEach(v=>{
+        const o=document.createElement('option');
+        o.value=v.voiceURI;
+        o.textContent=`${v.name} · ${v.lang}${v.localService?' · local':''}`;
+        voiceSelect.appendChild(o);
+      });
+      if(previous&&voices.some(v=>v.voiceURI===previous))voiceSelect.value=previous;
+    }
+    function loadVoices(){
+      voiceList=('speechSynthesis' in window)?window.speechSynthesis.getVoices():[];
+      populateVoiceSelect();
+    }
     if('speechSynthesis' in window){loadVoices();window.speechSynthesis.onvoiceschanged=loadVoices}
+    function voiceForType(type){
+      const voices=spanishVoices();
+      if(!voices.length)return null;
+      const local=voices.filter(v=>v.localService!==false);
+      const pool=local.length?local:voices;
+      if(type==='male')return pool.find(v=>maleNames.test(v.name))||pool.find(v=>!femaleNames.test(v.name))||pool[0];
+      if(type==='female')return pool.find(v=>femaleNames.test(v.name))||pool[0];
+      if(type==='mexican')return pool.find(v=>/^es[-_]MX/i.test(v.lang))||voices.find(v=>/^es[-_]MX/i.test(v.lang))||pool[0];
+      const current=settings.voiceURI;
+      const idx=pool.findIndex(v=>v.voiceURI===current);
+      return pool[(idx+1+pool.length)%pool.length]||pool[0];
+    }
+    function selectVoiceType(type){
+      settings.voiceType=type;
+      voiceTypes.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.voiceType===type));
+      const v=voiceForType(type);
+      if(v){settings.voiceURI=v.voiceURI;voiceSelect.value=v.voiceURI}
+      else{settings.voiceURI='';voiceSelect.value=''}
+    }
     function bestVoice(){
       if(!voiceList.length)return null;
-      const mexican=voiceList.find(v=>/^es[-_]MX/i.test(v.lang)&&v.localService!==false);
-      const localSpanish=voiceList.find(v=>/^es/i.test(v.lang)&&v.localService!==false);
-      const anyMex=voiceList.find(v=>/^es[-_]MX/i.test(v.lang));
-      const anySpanish=voiceList.find(v=>/^es/i.test(v.lang));
-      return mexican||localSpanish||anyMex||anySpanish||null;
+      if(settings.voiceURI){
+        const selected=voiceList.find(v=>v.voiceURI===settings.voiceURI);
+        if(selected)return selected;
+      }
+      return voiceForType(settings.voiceType)||spanishVoices()[0]||null;
     }
     function speak(text,onEnd){
       if(!('speechSynthesis' in window)){if(onEnd)onEnd();return}
@@ -279,7 +335,22 @@
     settingsBtn.addEventListener('click',openSheet);backdrop.addEventListener('click',closeSheet);
     soundToggle.addEventListener('change',()=>{settings.sound=soundToggle.checked;if(settings.sound)sfx('card')});
     vibrationToggle.addEventListener('change',()=>{settings.vibration=vibrationToggle.checked;if(settings.vibration)vibrate(18)});
-    voiceStyles.addEventListener('click',e=>{const btn=e.target.closest('button[data-style]');if(!btn)return;voiceStyles.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');settings.voiceStyle=btn.dataset.style;speak('La Lotería');showToast(`Voz: ${btn.textContent.trim()}`)});
+    voiceTypes.addEventListener('click',e=>{
+      const btn=e.target.closest('button[data-voice-type]');if(!btn)return;
+      selectVoiceType(btn.dataset.voiceType);
+      speak('Corre y se va, con: La Lotería');
+      showToast(`Voz: ${btn.textContent.trim()}`);
+    });
+    voiceSelect.addEventListener('change',()=>{
+      settings.voiceURI=voiceSelect.value;
+      if(voiceSelect.value){
+        voiceTypes.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+        settings.voiceType='custom';
+      }
+      speak('La Lotería');
+    });
+    voicePreview.addEventListener('click',()=>speak('Corre y se va, con: El Gallo'));
+    voiceStyles.addEventListener('click',e=>{const btn=e.target.closest('button[data-style]');if(!btn)return;voiceStyles.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');settings.voiceStyle=btn.dataset.style;speak('La Lotería');showToast(`Estilo: ${btn.textContent.trim()}`)});
 
     const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     function isStandalone(){return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}
@@ -311,7 +382,7 @@
 
     if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))}
 
-    deck=shuffled();updateProgress();renderHistory();setRunningUI();
+    deck=shuffled();updateProgress();renderHistory();setRunningUI();setTimeout(()=>selectVoiceType('mexican'),150);
   })();
   </script>
 </body>
