@@ -232,12 +232,13 @@
       const anySpanish=voiceList.find(v=>/^es/i.test(v.lang));
       return mexican||localSpanish||anyMex||anySpanish||null;
     }
-    function speak(text){
-      if(!('speechSynthesis' in window))return;
+    function speak(text,onEnd){
+      if(!('speechSynthesis' in window)){if(onEnd)onEnd();return}
       window.speechSynthesis.cancel();
       const p=voiceProfiles[settings.voiceStyle]||voiceProfiles.classic;
       const u=new SpeechSynthesisUtterance(text);u.lang='es-MX';u.rate=p.rate;u.pitch=p.pitch;u.volume=1;
       const v=bestVoice();if(v)u.voice=v;
+      if(onEnd){let done=false;const finish=()=>{if(done)return;done=true;onEnd()};u.onend=finish;u.onerror=finish}
       window.speechSynthesis.speak(u);
     }
 
@@ -249,7 +250,21 @@
     function celebration(){sfx('end');vibrate([35,50,35]);for(let i=0;i<34;i++){const el=document.createElement('i');el.style.left=`${Math.random()*100}%`;el.style.animationDelay=`${Math.random()*.35}s`;el.style.animationDuration=`${1.4+Math.random()*.9}s`;confetti.appendChild(el)}setTimeout(()=>confetti.innerHTML='',2400);showToast('🎉 ¡Se terminó la baraja!')}
     function nextCard(){if(!deck.length)shuffleDeck(false);if(index>=deck.length-1){stop(false);celebration();return}index++;setCard(deck[index],index===deck.length-1);if(index===deck.length-1){stop(false);setTimeout(celebration,170)}}
     function setRunningUI(){playBtn.classList.toggle('running',running);playIcon.textContent=running?'Ⅱ':'▶';playLabel.textContent=running?'Pausar':'Jugar'}
-    function start(){ensureAudio();if(index>=deck.length-1||!deck.length)shuffleDeck(false);running=true;setRunningUI();sfx('start');if(index<0)nextCard();timer=setInterval(nextCard,Number(pace.value)*1000)}
+    function start(){
+      ensureAudio();
+      if(index>=deck.length-1||!deck.length)shuffleDeck(false);
+      running=true;setRunningUI();sfx('start');
+      if(index<0){
+        micro.textContent='Corre y se va con…';
+        speak('Corre y se va, con:',()=>{
+          if(!running)return;
+          nextCard();
+          if(running)timer=setInterval(nextCard,Number(pace.value)*1000);
+        });
+        return;
+      }
+      timer=setInterval(nextCard,Number(pace.value)*1000);
+    }
     function stop(withSfx=true){running=false;if(timer){clearInterval(timer);timer=null}if('speechSynthesis' in window)window.speechSynthesis.cancel();setRunningUI();if(withSfx)sfx('pause')}
     function restartTimer(){if(!running)return;clearInterval(timer);timer=setInterval(nextCard,Number(pace.value)*1000)}
     function shuffleDeck(announce=true){stop(false);deck=shuffled();index=-1;history=[];number.textContent='—';art.textContent='🔀';name.textContent='¡Baraja revuelta!';micro.textContent='Lista para jugar';renderHistory();updateProgress();animateCard();sfx('shuffle');vibrate([16,30,16]);if(announce)showToast('🔀 Nuevo orden aleatorio')}
