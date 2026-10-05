@@ -382,12 +382,13 @@
       if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){showToast('Este navegador no permite grabar audio');return}
       try{
         const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+        const targetKey=RECORD_ITEMS[recordIndex].key;
         recordChunks=[];mediaRecorder=new MediaRecorder(stream);
         mediaRecorder.ondataavailable=e=>{if(e.data.size)recordChunks.push(e.data)};
         mediaRecorder.onstop=async()=>{
           const blob=new Blob(recordChunks,{type:mediaRecorder.mimeType||'audio/webm'});
           stream.getTracks().forEach(t=>t.stop());
-          await putClip(RECORD_ITEMS[recordIndex].key,blob);
+          await putClip(targetKey,blob);
           recordBtn.classList.remove('recording');recordBtn.textContent='● Grabar';
           showToast('✅ Grabación guardada');await updateRecorderUI();
         };
@@ -430,7 +431,7 @@
     nextBtn.addEventListener('click',()=>{ensureAudio();if(running)stop(false);nextCard()});
     pace.addEventListener('input',()=>{paceValue.textContent=`${pace.value}s`;restartTimer()});
     settingsBtn.addEventListener('click',openSheet);backdrop.addEventListener('click',closeSheet);
-    voiceMode.addEventListener('click',e=>{const btn=e.target.closest('button[data-mode]');if(!btn)return;settings.voiceMode=btn.dataset.mode;voiceMode.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode===settings.voiceMode));showToast(settings.voiceMode==='recorded'?'🎙️ Voz grabada activada':'🔊 Voz del sistema activada')});
+    voiceMode.addEventListener('click',e=>{const btn=e.target.closest('button[data-mode]');if(!btn)return;settings.voiceMode=btn.dataset.mode;localStorage.setItem('loteria-voice-mode',settings.voiceMode);voiceMode.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode===settings.voiceMode));showToast(settings.voiceMode==='recorded'?'🎙️ Voz grabada activada':'🔊 Voz del sistema activada')});
     savePackName.addEventListener('click',()=>{localStorage.setItem('loteria-pack-name',packName.value.trim()||'Voz familiar');showToast('✅ Nombre guardado')});
     recordBtn.addEventListener('click',()=>{if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.stop();else startRecording()});
     playRecordBtn.addEventListener('click',async()=>{const item=RECORD_ITEMS[recordIndex],blob=await getClip(item.key);if(!blob)return;stopRecordedAudio();const url=URL.createObjectURL(blob),a=new Audio(url);activeRecordedAudio=a;a.onended=()=>{URL.revokeObjectURL(url);activeRecordedAudio=null};a.play()});
@@ -486,6 +487,7 @@
     if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))}
 
     const savedPackName=localStorage.getItem('loteria-pack-name');if(savedPackName)packName.value=savedPackName;
+    const savedVoiceMode=localStorage.getItem('loteria-voice-mode');if(savedVoiceMode==='recorded'){settings.voiceMode='recorded';voiceMode.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode==='recorded'))}
     deck=shuffled();updateProgress();renderHistory();setRunningUI();setTimeout(()=>{selectVoiceType('mexican');updateRecorderUI()},150);
   })();
   </script>
