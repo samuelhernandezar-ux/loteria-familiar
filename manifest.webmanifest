@@ -1,0 +1,16 @@
+{
+  "name": "Lotería Familiar Mexicana",
+  "short_name": "Lotería",
+  "description": "Lotería familiar mexicana, móvil y offline.",
+  "lang": "es-MX",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#efe6cf",
+  "theme_color": "#0f5132",
+  "icons": [
+    {"src":"/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}
