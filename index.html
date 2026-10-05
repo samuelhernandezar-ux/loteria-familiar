@@ -107,14 +107,6 @@
     .pack-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:9px}
     .pack-row input{min-width:0;height:44px;border-radius:12px;border:1px solid rgba(80,56,38,.14);background:#fff;padding:0 10px}
     .record-progress{height:7px;border-radius:99px;background:rgba(80,56,38,.10);overflow:hidden;margin-top:9px}.record-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--gold));transition:width .2s}
-    .clone-box{margin-top:10px;padding:12px;border-radius:16px;background:linear-gradient(180deg,#fff8e7,#f6e7c6);border:1px solid rgba(80,56,38,.12)}
-    .clone-box h3{margin:0;font-size:1rem}.clone-box p{margin:5px 0 0!important;font-size:.78rem!important}
-    .clone-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-    .clone-actions button{min-height:46px;border-radius:13px;border:1px solid rgba(80,56,38,.12);font-weight:900;background:#fff;color:var(--ink)}
-    .clone-actions .recording{background:var(--red);color:white;border-color:var(--red)}
-    .clone-generate{width:100%;min-height:50px;border:0;border-radius:14px;background:linear-gradient(145deg,var(--green),var(--green-2));color:white;font-weight:950;margin-top:10px}
-    .consent{display:flex;align-items:flex-start;gap:8px;margin-top:10px;font-size:.76rem;color:var(--muted);line-height:1.35}.consent input{margin-top:2px;width:18px;height:18px;accent-color:var(--green)}
-    .clone-status{margin-top:9px;font-size:.76rem;font-weight:850;color:var(--green)}
     .switch-row{display:flex;align-items:center;justify-content:space-between;gap:14px}.switch-row b{font-size:.93rem}.switch-row small{display:block;color:var(--muted);font-size:.76rem;margin-top:3px}
     .switch{position:relative;width:52px;height:30px;flex:0 0 auto}.switch input{position:absolute;opacity:0}.slider{position:absolute;inset:0;border-radius:99px;background:#d8cbb4;transition:.2s}.slider:after{content:"";position:absolute;width:24px;height:24px;left:3px;top:3px;border-radius:50%;background:white;box-shadow:0 2px 8px rgba(0,0,0,.18);transition:.2s}.switch input:checked+.slider{background:var(--green)}.switch input:checked+.slider:after{transform:translateX(22px)}
     .history{display:flex;gap:7px;overflow-x:auto;padding:2px 0 5px;scrollbar-width:none}.history::-webkit-scrollbar{display:none}.history-chip{flex:0 0 auto;min-width:76px;max-width:104px;border-radius:14px;background:#fff8e7;border:1px solid rgba(80,56,38,.1);padding:8px;text-align:center}.history-chip .e{font-size:1.45rem}.history-chip .t{font-size:.67rem;font-weight:900;line-height:1.05;margin-top:4px}
@@ -192,21 +184,7 @@
     </div>
 
     <div class="setting" id="recordedVoiceSetting">
-      <label>Crear voz con IA</label>
-      <div class="clone-box">
-        <h3>🎙️ Graba una muestra</h3>
-        <p>Habla de forma natural durante 30–60 segundos, en un lugar silencioso. Con esa muestra se generarán automáticamente la introducción y las 54 cartas.</p>
-        <div class="clone-actions">
-          <button id="sampleRecordBtn" type="button">● Grabar muestra</button>
-          <button id="samplePlayBtn" type="button" disabled>▶ Escuchar</button>
-        </div>
-        <label class="consent"><input id="cloneConsent" type="checkbox"><span>Confirmo que esta es mi voz o que tengo permiso explícito de la persona para crear y usar este clon de voz.</span></label>
-        <button id="cloneGenerateBtn" class="clone-generate" type="button">✨ Crear voz y generar las 55 frases</button>
-        <div class="record-progress"><i id="cloneFill"></i></div>
-        <div id="cloneStatus" class="clone-status">Aún no hay muestra grabada.</div>
-      </div>
-
-      <label style="margin-top:16px">Grabación manual (opcional)</label>
+      <label>Voz de la familia</label>
       <div class="pack-row">
         <input id="packName" type="text" maxlength="30" placeholder="Ej. Voz de Papá" value="Voz familiar" />
         <button id="savePackName" type="button">Guardar</button>
@@ -224,7 +202,7 @@
           <button id="nextRecordBtn" type="button">Siguiente ›</button>
         </div>
       </div>
-      <p class="voice-note">Las grabaciones se guardan solo en este teléfono y funcionan sin internet. Si falta una carta, se usa la voz del sistema.</p>
+      <p class="voice-note">Las grabaciones se guardan solo en este teléfono y funcionan sin internet. El micrófono usa reducción de ruido, cancelación de eco y ajuste automático de volumen cuando el navegador lo permite. Si falta una carta, se usa la voz del sistema.</p>
     </div>
 
     <div class="setting">
@@ -285,12 +263,11 @@
     const shuffleBtn=$('#shuffleBtn'),playBtn=$('#playBtn'),playIcon=$('#playIcon'),playLabel=$('#playLabel'),nextBtn=$('#nextBtn');
     const pace=$('#pace'),paceValue=$('#paceValue'),settingsBtn=$('#settingsBtn'),sheet=$('#sheet'),backdrop=$('#backdrop');
     const voiceMode=$('#voiceMode'),recordedVoiceSetting=$('#recordedVoiceSetting'),packName=$('#packName'),savePackName=$('#savePackName'),recordLabel=$('#recordLabel'),recordCount=$('#recordCount'),recordTarget=$('#recordTarget'),recordFill=$('#recordFill'),recordBtn=$('#recordBtn'),playRecordBtn=$('#playRecordBtn'),prevRecordBtn=$('#prevRecordBtn'),nextRecordBtn=$('#nextRecordBtn');
-    const sampleRecordBtn=$('#sampleRecordBtn'),samplePlayBtn=$('#samplePlayBtn'),cloneConsent=$('#cloneConsent'),cloneGenerateBtn=$('#cloneGenerateBtn'),cloneFill=$('#cloneFill'),cloneStatus=$('#cloneStatus');
     const voiceTypes=$('#voiceTypes'),voiceSelect=$('#voiceSelect'),voicePreview=$('#voicePreview'),voiceStyles=$('#voiceStyles'),soundToggle=$('#soundToggle'),vibrationToggle=$('#vibrationToggle'),historyEl=$('#history');
     const installBtn=$('#installBtn'),iosHint=$('#iosHint'),toast=$('#toast'),confetti=$('#confetti'),offlinePill=$('#offlinePill');
 
     const settings={voiceMode:'system',voiceStyle:'classic',voiceType:'mexican',voiceURI:'',sound:true,vibration:true};
-    let deck=[],index=-1,running=false,timer=null,history=[],audioCtx=null,deferredPrompt=null,voiceList=[],recordIndex=0,mediaRecorder=null,recordChunks=[],activeRecordedAudio=null,sampleRecorder=null,sampleChunks=[],sampleBlob=null;
+    let deck=[],index=-1,running=false,timer=null,history=[],audioCtx=null,deferredPrompt=null,voiceList=[],recordIndex=0,mediaRecorder=null,recordChunks=[],activeRecordedAudio=null;
     const RECORD_ITEMS=[{key:'intro',label:'Introducción',text:'Corre y se va, con:'},...CARDS.map(c=>({key:'card-'+c.number,label:c.number+'. '+c.name,text:c.name}))];
     const PACK_ID='family-default';
 
@@ -305,7 +282,21 @@
     function vibrate(pattern){if(settings.vibration && 'vibrate' in navigator) navigator.vibrate(pattern)}
     function ensureAudio(){if(!audioCtx && (window.AudioContext||window.webkitAudioContext)) audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx?.state==='suspended') audioCtx.resume().catch(()=>{});return audioCtx}
     function tone(freq,duration=.07,type='triangle',gain=.045,delay=0){if(!settings.sound)return;const c=ensureAudio();if(!c)return;const o=c.createOscillator(),g=c.createGain(),t=c.currentTime+delay;o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(gain,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+duration+.03)}
-    function sfx(type){if(type==='shuffle'){[0,.04,.08,.12,.16,.20].forEach((d,i)=>tone(180+i*30,.05,'triangle',.035,d))}else if(type==='card'){tone(420,.055,'triangle',.05,0);tone(640,.08,'sine',.03,.05)}else if(type==='start'){tone(330,.07,'triangle',.04,0);tone(440,.07,'triangle',.04,.07);tone(660,.1,'triangle',.04,.14)}else if(type==='end'){[523,659,784,1047].forEach((f,i)=>tone(f,.16,'triangle',.05,i*.08))}else if(type==='pause'){tone(320,.07,'sine',.035,0);tone(230,.09,'sine',.025,.07)}}
+    function shuffleNoise(){
+      if(!settings.sound)return;
+      const c=ensureAudio();if(!c)return;
+      for(let i=0;i<11;i++){
+        const dur=.038+(i%3)*.009, len=Math.max(1,Math.floor(c.sampleRate*dur));
+        const b=c.createBuffer(1,len,c.sampleRate),data=b.getChannelData(0);
+        for(let j=0;j<len;j++)data[j]=(Math.random()*2-1)*(1-j/len);
+        const src=c.createBufferSource(),filter=c.createBiquadFilter(),g=c.createGain();
+        filter.type='bandpass';filter.frequency.value=1100+(i%4)*260;filter.Q.value=.65;
+        const t=c.currentTime+i*.028;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.09,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+        src.buffer=b;src.connect(filter);filter.connect(g);g.connect(c.destination);src.start(t);src.stop(t+dur+.01);
+      }
+      tone(120,.055,'triangle',.018,.30);
+    }
+    function sfx(type){if(type==='shuffle'){shuffleNoise()}else if(type==='card'){tone(420,.055,'triangle',.05,0);tone(640,.08,'sine',.03,.05)}else if(type==='start'){tone(330,.07,'triangle',.04,0);tone(440,.07,'triangle',.04,.07);tone(660,.1,'triangle',.04,.14)}else if(type==='end'){[523,659,784,1047].forEach((f,i)=>tone(f,.16,'triangle',.05,i*.08))}else if(type==='pause'){tone(320,.07,'sine',.035,0);tone(230,.09,'sine',.025,.07)}}
 
     const maleNames=/\b(Jorge|Juan|Diego|Carlos|Pablo|Enrique|Raúl|Raul|Andrés|Andres|Miguel|Álvaro|Alvaro|Antonio)\b/i;
     const femaleNames=/\b(Paulina|Mónica|Monica|Luciana|Helena|Marisol|Conchita|Sofía|Sofia|Laura|Carmen|Isabela|Isabel)\b/i;
@@ -401,63 +392,18 @@
       const exists=await getClip(item.key);playRecordBtn.disabled=!exists;playRecordBtn.textContent=exists?'▶ Escuchar':'Sin grabar';
       prevRecordBtn.disabled=recordIndex===0;nextRecordBtn.disabled=recordIndex===RECORD_ITEMS.length-1;
     }
-    async function blobToBase64(blob){
-      const ab=await blob.arrayBuffer();let binary='';const bytes=new Uint8Array(ab);const chunk=0x8000;
-      for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
-      return btoa(binary);
+    function audioConstraints(){
+      return {
+        echoCancellation:{ideal:true},
+        noiseSuppression:{ideal:true},
+        autoGainControl:{ideal:true},
+        channelCount:{ideal:1}
+      };
     }
-    async function startSampleRecording(){
-      if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){showToast('Este navegador no permite grabar audio');return}
-      try{
-        const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-        sampleChunks=[];sampleRecorder=new MediaRecorder(stream);
-        sampleRecorder.ondataavailable=e=>{if(e.data.size)sampleChunks.push(e.data)};
-        sampleRecorder.onstop=()=>{
-          sampleBlob=new Blob(sampleChunks,{type:sampleRecorder.mimeType||'audio/webm'});
-          stream.getTracks().forEach(t=>t.stop());
-          sampleRecordBtn.classList.remove('recording');sampleRecordBtn.textContent='● Volver a grabar';
-          samplePlayBtn.disabled=false;cloneStatus.textContent='✅ Muestra lista. Puedes escucharla o generar la voz.';
-        };
-        sampleRecorder.start();sampleRecordBtn.classList.add('recording');sampleRecordBtn.textContent='■ Detener muestra';cloneStatus.textContent='Grabando muestra…';
-      }catch(e){showToast('Necesitas permitir acceso al micrófono')}
-    }
-    async function generateClonePackage(){
-      if(!sampleBlob){showToast('Primero graba una muestra');return}
-      if(!cloneConsent.checked){showToast('Confirma el permiso para usar la voz');return}
-      cloneGenerateBtn.disabled=true;sampleRecordBtn.disabled=true;cloneFill.style.width='2%';cloneStatus.textContent='Creando la voz…';
-      try{
-        const audioBase64=await blobToBase64(sampleBlob);
-        const r=await fetch('/api/clone-voice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-          audioBase64,mimeType:sampleBlob.type||'audio/webm',name:packName.value.trim()||'Voz familiar',consent:true
-        })});
-        const data=await r.json();
-        if(!r.ok)throw new Error(data.error||'No se pudo crear la voz');
-        if(data.requiresVerification)throw new Error('El proveedor solicita verificación adicional para esta voz.');
-        const voiceId=data.voiceId;
-        for(let i=0;i<RECORD_ITEMS.length;i++){
-          const item=RECORD_ITEMS[i];
-          cloneStatus.textContent=`Generando ${i+1} de ${RECORD_ITEMS.length}: ${item.text}`;
-          cloneFill.style.width=`${5+((i+1)/RECORD_ITEMS.length)*95}%`;
-          const ar=await fetch('/api/synthesize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({voiceId,text:item.text})});
-          if(!ar.ok){const er=await ar.json().catch(()=>({}));throw new Error(er.error||('Error al generar '+item.text))}
-          const blob=await ar.blob();await putClip(item.key,blob);
-        }
-        settings.voiceMode='recorded';localStorage.setItem('loteria-voice-mode','recorded');
-        voiceMode.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode==='recorded'));
-        cloneFill.style.width='100%';cloneStatus.textContent='✅ Voz lista: 55 de 55 frases generadas y guardadas en este teléfono.';
-        await updateRecorderUI();showToast('🎉 Voz familiar lista');
-      }catch(e){
-        cloneStatus.textContent='⚠️ '+(e?.message||'No se pudo generar la voz');
-        showToast('No se pudo completar la voz');
-      }finally{
-        cloneGenerateBtn.disabled=false;sampleRecordBtn.disabled=false;
-      }
-    }
-
     async function startRecording(){
       if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){showToast('Este navegador no permite grabar audio');return}
       try{
-        const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+        const stream=await navigator.mediaDevices.getUserMedia({audio:audioConstraints()});
         const targetKey=RECORD_ITEMS[recordIndex].key;
         recordChunks=[];mediaRecorder=new MediaRecorder(stream);
         mediaRecorder.ondataavailable=e=>{if(e.data.size)recordChunks.push(e.data)};
@@ -507,9 +453,6 @@
     nextBtn.addEventListener('click',()=>{ensureAudio();if(running)stop(false);nextCard()});
     pace.addEventListener('input',()=>{paceValue.textContent=`${pace.value}s`;restartTimer()});
     settingsBtn.addEventListener('click',openSheet);backdrop.addEventListener('click',closeSheet);
-    sampleRecordBtn.addEventListener('click',()=>{if(sampleRecorder&&sampleRecorder.state==='recording')sampleRecorder.stop();else startSampleRecording()});
-    samplePlayBtn.addEventListener('click',()=>{if(!sampleBlob)return;const url=URL.createObjectURL(sampleBlob),a=new Audio(url);a.onended=()=>URL.revokeObjectURL(url);a.play()});
-    cloneGenerateBtn.addEventListener('click',generateClonePackage);
     voiceMode.addEventListener('click',e=>{const btn=e.target.closest('button[data-mode]');if(!btn)return;settings.voiceMode=btn.dataset.mode;localStorage.setItem('loteria-voice-mode',settings.voiceMode);voiceMode.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode===settings.voiceMode));showToast(settings.voiceMode==='recorded'?'🎙️ Voz grabada activada':'🔊 Voz del sistema activada')});
     savePackName.addEventListener('click',()=>{localStorage.setItem('loteria-pack-name',packName.value.trim()||'Voz familiar');showToast('✅ Nombre guardado')});
     recordBtn.addEventListener('click',()=>{if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.stop();else startRecording()});
