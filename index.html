@@ -97,6 +97,16 @@
     .voice-picker select{min-width:0;height:48px;border-radius:14px;border:1px solid rgba(80,56,38,.14);background:#fff8e7;color:var(--ink);padding:0 11px;font-weight:800}
     .voice-preview{height:48px;border-radius:14px;border:0;background:var(--blue);color:white;padding:0 13px;font-weight:950}
     .voice-note{font-size:.72rem!important;margin-top:8px!important;color:var(--muted)!important}
+    .recorder{margin-top:10px;border-radius:16px;background:#fff8e7;border:1px solid rgba(80,56,38,.12);padding:11px}
+    .record-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.record-top b{font-size:.92rem}.record-top span{font-size:.72rem;font-weight:900;color:var(--muted)}
+    .record-target{margin-top:9px;min-height:74px;border-radius:14px;background:#f2e2bf;display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;font-family:Georgia,serif;font-size:1.16rem;font-weight:800}
+    .record-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+    .record-actions button,.record-nav button,.pack-row button{min-height:45px;border-radius:13px;border:1px solid rgba(80,56,38,.12);font-weight:900;background:#fff;color:var(--ink)}
+    .record-actions .recording{background:var(--red);color:white;border-color:var(--red)}
+    .record-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .pack-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:9px}
+    .pack-row input{min-width:0;height:44px;border-radius:12px;border:1px solid rgba(80,56,38,.14);background:#fff;padding:0 10px}
+    .record-progress{height:7px;border-radius:99px;background:rgba(80,56,38,.10);overflow:hidden;margin-top:9px}.record-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--gold));transition:width .2s}
     .switch-row{display:flex;align-items:center;justify-content:space-between;gap:14px}.switch-row b{font-size:.93rem}.switch-row small{display:block;color:var(--muted);font-size:.76rem;margin-top:3px}
     .switch{position:relative;width:52px;height:30px;flex:0 0 auto}.switch input{position:absolute;opacity:0}.slider{position:absolute;inset:0;border-radius:99px;background:#d8cbb4;transition:.2s}.slider:after{content:"";position:absolute;width:24px;height:24px;left:3px;top:3px;border-radius:50%;background:white;box-shadow:0 2px 8px rgba(0,0,0,.18);transition:.2s}.switch input:checked+.slider{background:var(--green)}.switch input:checked+.slider:after{transform:translateX(22px)}
     .history{display:flex;gap:7px;overflow-x:auto;padding:2px 0 5px;scrollbar-width:none}.history::-webkit-scrollbar{display:none}.history-chip{flex:0 0 auto;min-width:76px;max-width:104px;border-radius:14px;background:#fff8e7;border:1px solid rgba(80,56,38,.1);padding:8px;text-align:center}.history-chip .e{font-size:1.45rem}.history-chip .t{font-size:.67rem;font-weight:900;line-height:1.05;margin-top:4px}
@@ -166,7 +176,37 @@
     <p>La voz siempre está activa. Elige cómo quieres que cante las cartas.</p>
 
     <div class="setting">
-      <label>Tipo de voz</label>
+      <label>Cantador</label>
+      <div class="seg" id="voiceMode">
+        <button type="button" data-mode="system" class="active">🔊 Sistema</button>
+        <button type="button" data-mode="recorded">🎙️ Voz grabada</button>
+      </div>
+    </div>
+
+    <div class="setting" id="recordedVoiceSetting">
+      <label>Voz de la familia</label>
+      <div class="pack-row">
+        <input id="packName" type="text" maxlength="30" placeholder="Ej. Voz de Papá" value="Voz familiar" />
+        <button id="savePackName" type="button">Guardar</button>
+      </div>
+      <div class="recorder">
+        <div class="record-top"><b id="recordLabel">Introducción</b><span id="recordCount">0 / 55</span></div>
+        <div id="recordTarget" class="record-target">“Corre y se va, con:”</div>
+        <div class="record-progress"><i id="recordFill"></i></div>
+        <div class="record-actions">
+          <button id="recordBtn" type="button">● Grabar</button>
+          <button id="playRecordBtn" type="button">▶ Escuchar</button>
+        </div>
+        <div class="record-nav">
+          <button id="prevRecordBtn" type="button">‹ Anterior</button>
+          <button id="nextRecordBtn" type="button">Siguiente ›</button>
+        </div>
+      </div>
+      <p class="voice-note">Las grabaciones se guardan solo en este teléfono y funcionan sin internet. Si falta una carta, se usa la voz del sistema.</p>
+    </div>
+
+    <div class="setting">
+      <label>Tipo de voz del sistema</label>
       <div class="seg" id="voiceTypes">
         <button type="button" data-voice-type="male">👨 Hombre</button>
         <button type="button" data-voice-type="female">👩 Mujer</button>
@@ -222,11 +262,14 @@
     const progressText=$('#progressText'),remainingText=$('#remainingText'),fill=$('#fill');
     const shuffleBtn=$('#shuffleBtn'),playBtn=$('#playBtn'),playIcon=$('#playIcon'),playLabel=$('#playLabel'),nextBtn=$('#nextBtn');
     const pace=$('#pace'),paceValue=$('#paceValue'),settingsBtn=$('#settingsBtn'),sheet=$('#sheet'),backdrop=$('#backdrop');
+    const voiceMode=$('#voiceMode'),recordedVoiceSetting=$('#recordedVoiceSetting'),packName=$('#packName'),savePackName=$('#savePackName'),recordLabel=$('#recordLabel'),recordCount=$('#recordCount'),recordTarget=$('#recordTarget'),recordFill=$('#recordFill'),recordBtn=$('#recordBtn'),playRecordBtn=$('#playRecordBtn'),prevRecordBtn=$('#prevRecordBtn'),nextRecordBtn=$('#nextRecordBtn');
     const voiceTypes=$('#voiceTypes'),voiceSelect=$('#voiceSelect'),voicePreview=$('#voicePreview'),voiceStyles=$('#voiceStyles'),soundToggle=$('#soundToggle'),vibrationToggle=$('#vibrationToggle'),historyEl=$('#history');
     const installBtn=$('#installBtn'),iosHint=$('#iosHint'),toast=$('#toast'),confetti=$('#confetti'),offlinePill=$('#offlinePill');
 
-    const settings={voiceStyle:'classic',voiceType:'mexican',voiceURI:'',sound:true,vibration:true};
-    let deck=[],index=-1,running=false,timer=null,history=[],audioCtx=null,deferredPrompt=null,voiceList=[];
+    const settings={voiceMode:'system',voiceStyle:'classic',voiceType:'mexican',voiceURI:'',sound:true,vibration:true};
+    let deck=[],index=-1,running=false,timer=null,history=[],audioCtx=null,deferredPrompt=null,voiceList=[],recordIndex=0,mediaRecorder=null,recordChunks=[],activeRecordedAudio=null;
+    const RECORD_ITEMS=[{key:'intro',label:'Introducción',text:'Corre y se va, con:'},...CARDS.map(c=>({key:'card-'+c.number,label:c.number+'. '+c.name,text:c.name}))];
+    const PACK_ID='family-default';
 
     const voiceProfiles={
       classic:{rate:.88,pitch:1.0},
@@ -298,11 +341,65 @@
       window.speechSynthesis.speak(u);
     }
 
+    function openVoiceDB(){
+      return new Promise((resolve,reject)=>{
+        const req=indexedDB.open('loteria-voices',1);
+        req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('clips'))db.createObjectStore('clips')};
+        req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+      });
+    }
+    async function putClip(key,blob){
+      const db=await openVoiceDB();
+      return new Promise((resolve,reject)=>{const tx=db.transaction('clips','readwrite');tx.objectStore('clips').put(blob,PACK_ID+':'+key);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}});
+    }
+    async function getClip(key){
+      const db=await openVoiceDB();
+      return new Promise((resolve,reject)=>{const tx=db.transaction('clips','readonly');const req=tx.objectStore('clips').get(PACK_ID+':'+key);req.onsuccess=()=>{db.close();resolve(req.result||null)};req.onerror=()=>{db.close();reject(req.error)}});
+    }
+    async function countClips(){
+      let n=0;for(const item of RECORD_ITEMS){if(await getClip(item.key))n++}return n;
+    }
+    function stopRecordedAudio(){if(activeRecordedAudio){activeRecordedAudio.pause();activeRecordedAudio.src='';activeRecordedAudio=null}}
+    async function announce(key,text,onEnd){
+      if(settings.voiceMode!=='recorded'){speak(text,onEnd);return}
+      try{
+        const blob=await getClip(key);
+        if(!blob){speak(text,onEnd);return}
+        if('speechSynthesis' in window)window.speechSynthesis.cancel();
+        stopRecordedAudio();
+        const url=URL.createObjectURL(blob),a=new Audio(url);activeRecordedAudio=a;
+        const finish=()=>{URL.revokeObjectURL(url);if(activeRecordedAudio===a)activeRecordedAudio=null;if(onEnd)onEnd()};
+        a.onended=finish;a.onerror=finish;await a.play();
+      }catch(e){speak(text,onEnd)}
+    }
+    async function updateRecorderUI(){
+      const item=RECORD_ITEMS[recordIndex];recordLabel.textContent=item.label;recordTarget.textContent='“'+item.text+'”';
+      const n=await countClips();recordCount.textContent=n+' / '+RECORD_ITEMS.length;recordFill.style.width=((n/RECORD_ITEMS.length)*100)+'%';
+      const exists=await getClip(item.key);playRecordBtn.disabled=!exists;playRecordBtn.textContent=exists?'▶ Escuchar':'Sin grabar';
+      prevRecordBtn.disabled=recordIndex===0;nextRecordBtn.disabled=recordIndex===RECORD_ITEMS.length-1;
+    }
+    async function startRecording(){
+      if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){showToast('Este navegador no permite grabar audio');return}
+      try{
+        const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+        recordChunks=[];mediaRecorder=new MediaRecorder(stream);
+        mediaRecorder.ondataavailable=e=>{if(e.data.size)recordChunks.push(e.data)};
+        mediaRecorder.onstop=async()=>{
+          const blob=new Blob(recordChunks,{type:mediaRecorder.mimeType||'audio/webm'});
+          stream.getTracks().forEach(t=>t.stop());
+          await putClip(RECORD_ITEMS[recordIndex].key,blob);
+          recordBtn.classList.remove('recording');recordBtn.textContent='● Grabar';
+          showToast('✅ Grabación guardada');await updateRecorderUI();
+        };
+        mediaRecorder.start();recordBtn.classList.add('recording');recordBtn.textContent='■ Detener';vibrate(18);
+      }catch(e){showToast('Necesitas permitir acceso al micrófono')}
+    }
+
     function shuffled(){const a=[...CARDS];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
     function animateCard(){card.classList.remove('pop');void card.offsetWidth;card.classList.add('pop')}
     function updateProgress(){const shown=Math.max(0,index+1),left=CARDS.length-shown;progressText.textContent=`${shown} de ${CARDS.length}`;remainingText.textContent=`${left} ${left===1?'restante':'restantes'}`;fill.style.width=`${(shown/CARDS.length)*100}%`}
     function renderHistory(){historyEl.innerHTML='';if(!history.length){historyEl.innerHTML='<div class="history-chip"><div class="e">🎴</div><div class="t">Aún no hay cartas</div></div>';return}history.slice(0,8).forEach(c=>{const x=document.createElement('div');x.className='history-chip';x.innerHTML=`<div class="e">${c.art}</div><div class="t">${c.number}. ${c.name}</div>`;historyEl.appendChild(x)})}
-    function setCard(c,final=false){number.textContent=c.number;art.textContent=c.art;name.textContent=c.name;micro.textContent=final?'Última carta de la baraja':`Carta ${index+1} de ${CARDS.length}`;history.unshift(c);renderHistory();updateProgress();animateCard();sfx('card');vibrate(18);speak(c.name)}
+    function setCard(c,final=false){number.textContent=c.number;art.textContent=c.art;name.textContent=c.name;micro.textContent=final?'Última carta de la baraja':`Carta ${index+1} de ${CARDS.length}`;history.unshift(c);renderHistory();updateProgress();animateCard();sfx('card');vibrate(18);announce('card-'+c.number,c.name)}
     function celebration(){sfx('end');vibrate([35,50,35]);for(let i=0;i<34;i++){const el=document.createElement('i');el.style.left=`${Math.random()*100}%`;el.style.animationDelay=`${Math.random()*.35}s`;el.style.animationDuration=`${1.4+Math.random()*.9}s`;confetti.appendChild(el)}setTimeout(()=>confetti.innerHTML='',2400);showToast('🎉 ¡Se terminó la baraja!')}
     function nextCard(){if(!deck.length)shuffleDeck(false);if(index>=deck.length-1){stop(false);celebration();return}index++;setCard(deck[index],index===deck.length-1);if(index===deck.length-1){stop(false);setTimeout(celebration,170)}}
     function setRunningUI(){playBtn.classList.toggle('running',running);playIcon.textContent=running?'Ⅱ':'▶';playLabel.textContent=running?'Pausar':'Jugar'}
@@ -312,7 +409,7 @@
       running=true;setRunningUI();sfx('start');
       if(index<0){
         micro.textContent='Corre y se va con…';
-        speak('Corre y se va, con:',()=>{
+        announce('intro','Corre y se va, con:',()=>{
           if(!running)return;
           nextCard();
           if(running)timer=setInterval(nextCard,Number(pace.value)*1000);
@@ -321,7 +418,7 @@
       }
       timer=setInterval(nextCard,Number(pace.value)*1000);
     }
-    function stop(withSfx=true){running=false;if(timer){clearInterval(timer);timer=null}if('speechSynthesis' in window)window.speechSynthesis.cancel();setRunningUI();if(withSfx)sfx('pause')}
+    function stop(withSfx=true){running=false;if(timer){clearInterval(timer);timer=null}if('speechSynthesis' in window)window.speechSynthesis.cancel();stopRecordedAudio();setRunningUI();if(withSfx)sfx('pause')}
     function restartTimer(){if(!running)return;clearInterval(timer);timer=setInterval(nextCard,Number(pace.value)*1000)}
     function shuffleDeck(announce=true){stop(false);deck=shuffled();index=-1;history=[];number.textContent='—';art.textContent='🔀';name.textContent='¡Baraja revuelta!';micro.textContent='Lista para jugar';renderHistory();updateProgress();animateCard();sfx('shuffle');vibrate([16,30,16]);if(announce)showToast('🔀 Nuevo orden aleatorio')}
 
@@ -333,6 +430,12 @@
     nextBtn.addEventListener('click',()=>{ensureAudio();if(running)stop(false);nextCard()});
     pace.addEventListener('input',()=>{paceValue.textContent=`${pace.value}s`;restartTimer()});
     settingsBtn.addEventListener('click',openSheet);backdrop.addEventListener('click',closeSheet);
+    voiceMode.addEventListener('click',e=>{const btn=e.target.closest('button[data-mode]');if(!btn)return;settings.voiceMode=btn.dataset.mode;voiceMode.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode===settings.voiceMode));showToast(settings.voiceMode==='recorded'?'🎙️ Voz grabada activada':'🔊 Voz del sistema activada')});
+    savePackName.addEventListener('click',()=>{localStorage.setItem('loteria-pack-name',packName.value.trim()||'Voz familiar');showToast('✅ Nombre guardado')});
+    recordBtn.addEventListener('click',()=>{if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.stop();else startRecording()});
+    playRecordBtn.addEventListener('click',async()=>{const item=RECORD_ITEMS[recordIndex],blob=await getClip(item.key);if(!blob)return;stopRecordedAudio();const url=URL.createObjectURL(blob),a=new Audio(url);activeRecordedAudio=a;a.onended=()=>{URL.revokeObjectURL(url);activeRecordedAudio=null};a.play()});
+    prevRecordBtn.addEventListener('click',async()=>{if(recordIndex>0){recordIndex--;await updateRecorderUI()}});
+    nextRecordBtn.addEventListener('click',async()=>{if(recordIndex<RECORD_ITEMS.length-1){recordIndex++;await updateRecorderUI()}});
     soundToggle.addEventListener('change',()=>{settings.sound=soundToggle.checked;if(settings.sound)sfx('card')});
     vibrationToggle.addEventListener('change',()=>{settings.vibration=vibrationToggle.checked;if(settings.vibration)vibrate(18)});
     voiceTypes.addEventListener('click',e=>{
@@ -382,7 +485,8 @@
 
     if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))}
 
-    deck=shuffled();updateProgress();renderHistory();setRunningUI();setTimeout(()=>selectVoiceType('mexican'),150);
+    const savedPackName=localStorage.getItem('loteria-pack-name');if(savedPackName)packName.value=savedPackName;
+    deck=shuffled();updateProgress();renderHistory();setRunningUI();setTimeout(()=>{selectVoiceType('mexican');updateRecorderUI()},150);
   })();
   </script>
 </body>
